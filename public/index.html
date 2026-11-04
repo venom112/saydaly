@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>صيدلي — نظام إدارة الصيدليات</title>
+<meta name="theme-color" content="#0d3a32">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234fd1a5'/%3E%3Cpath d='M13 8h6v5h5v6h-5v5h-6v-5H8v-6h5z' fill='%23073027'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&family=Reem+Kufi:wght@600;700&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="login" hidden><form id="fLogin" class="lg">
+  <div class="logo2"><span class="cross"></span><span id="lgShop">صيدلية</span></div>
+  <div><h2 style="margin:0">تسجيل الدخول</h2><p class="hsub">أدخل اسم المستخدم وكلمة المرور للمتابعة.</p></div>
+  <label>اسم المستخدم<input id="lgUser" autocomplete="username" autocapitalize="none" required></label>
+  <label>كلمة المرور<input id="lgPass" type="password" autocomplete="current-password" required></label>
+  <p id="lgErr" class="lgerr" role="alert"></p>
+  <button class="pri" id="lgBtn" type="submit" disabled>جاري التحميل…</button>
+  <p class="hsub" style="text-align:center;margin:0">صيدلي · نظام إدارة الصيدليات</p>
+</form></div>
+<div class="app">
+  <aside class="side">
+    <div class="logo"><span class="cross"></span><span id="shopName">صيدلية</span></div>
+    <nav id="gnav" aria-label="الأقسام الرئيسية"></nav>
+    <div class="side-foot"><span id="saveState"></span><span>F2 البيع · F3 الشراء · F4 الأصناف</span></div>
+  </aside>
+  <div class="col">
+    <header class="hdr">
+      <div class="hrow">
+        <div><h1 id="gTitle"></h1><p class="hsub" id="gSub"></p></div>
+        <div class="tools"><span class="who" id="whoami"></span><button class="sm" id="btnAcct" type="button">حسابي</button><button class="sm" id="btnOut" type="button">خروج</button><button class="sm" id="btnTheme" type="button">الوضع الليلي</button></div>
+      </div>
+      <nav class="tabs" id="tabs" aria-label="التبويبات"></nav>
+    </header>
+    <main id="view" aria-live="polite"></main>
+  </div>
+</div>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
+<div id="toast"><span id="toastMsg"></span></div>
+
+<script src="/js/core.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/party.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/items.js"></script>
+<script src="/js/sales.js"></script>
+<script src="/js/purchases.js"></script>
+<script src="/js/stock.js"></script>
+<script src="/js/accounts.js"></script>
+<script src="/js/reports.js"></script>
+<script src="/js/catalog.js"></script>
+<script src="/js/manual.js"></script>
+<script src="/js/scan.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/ops.js"></script>
+<script src="/js/insights.js"></script>
+<script src="/js/boot.js"></script>
+</body>
+</html>

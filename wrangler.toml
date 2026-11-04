@@ -1,0 +1,21 @@
+name = "saydaly"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+# Static site (public/) is served by Cloudflare; /api/* is handled by src/worker.js
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# 1) run:  npx wrangler d1 create pharmacy-db
+# 2) paste the printed database_id below, then commit
+[[d1_databases]]
+binding = "DB"
+database_name = "pharmacy-db"
+database_id = "PUT-YOUR-D1-DATABASE-ID-HERE"
+
+[vars]
+SESSION_HOURS = "12"
+
+# Optional secret (not stored here):  npx wrangler secret put ADMIN_PASSWORD
+# If set before the first request, the admin account is created with it instead of the default "admin".
