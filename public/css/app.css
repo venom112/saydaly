@@ -202,3 +202,17 @@ ${css}
 .hero.big .hero-app{font-size:15px}
 .hero.big .hero-dev{align-items:center;width:100%;max-width:420px}
 .hero.big .hero-dev a.wa{align-self:center}
+
+/* full-screen home */
+.welcome{position:relative;min-height:calc(100vh - 300px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:0 8px 8px}
+.w-logo .lg-img,.w-logo .cross{width:clamp(100px,18vh,220px)!important;height:clamp(100px,18vh,220px)!important;border-radius:clamp(26px,5vh,48px)}
+.w-logo{display:flex;justify-content:center}.w-logo .cross{display:block}
+.w-logo .lg-img{object-fit:contain;border:1px solid var(--line)}
+.w-logo .cross::before{inset:27% 43%}.w-logo .cross::after{inset:43% 27%}
+.w-app{margin:6px 0 0;font-family:var(--f-disp);font-size:clamp(52px,12vh,140px);line-height:1.1;font-weight:800;color:var(--accent);letter-spacing:0}
+.w-sub{font-size:clamp(17px,3vh,26px);color:var(--muted);font-weight:600}
+.w-shop{font-family:var(--f-disp);font-size:clamp(24px,4.5vh,40px);font-weight:700;margin-top:6px}
+.welcome .hero-dev{align-items:center;width:100%;max-width:440px;margin-top:14px}
+.w-fs{position:absolute;top:0;inset-inline-start:0}
+.welcome .hero-dev a.wa{align-self:center}
+@media (max-height:640px){.welcome{min-height:0}}

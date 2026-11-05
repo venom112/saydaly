@@ -2,17 +2,21 @@
 /* home screen: only the system logo/name, the pharmacy name and the developer's details */
 V.welcome=()=>{
   const st=S.settings,waNo="2"+DEV.phone;
-  const hello=`<section class="hero big">
-    <div class="hero-main">${logoHtml(st.logo,64)}<div>
-      <div class="hero-app">${APP_NAME} · نظام إدارة الصيدليات</div>
-      <h2>${esc(st.name||"صيدلية")}</h2>
-</div></div>
+  const hello=`<section class="welcome">
+    <button type="button" class="sm w-fs" id="wFs">ملء الشاشة</button>
+    <div class="w-logo">${logoHtml(st.logo,240)}</div>
+    <h2 class="w-app">${APP_NAME}</h2>
+    <div class="w-sub">نظام إدارة الصيدليات</div>
+    <div class="w-shop">${esc(st.name||"صيدلية")}</div>
     <div class="hero-dev"><b>المبرمج: ${esc(DEV.name)}</b>
       <span>هاتف وواتساب: <a href="tel:+2${DEV.phone}" dir="ltr">${DEV.phone}</a></span>
       <span>البريد: <a href="mailto:${DEV.email}" dir="ltr">${DEV.email}</a></span>
       <a class="wa" href="https://wa.me/${waNo}" target="_blank" rel="noopener">مراسلة على واتساب</a></div>
   </section>`;
   $("#view").innerHTML=hello;
+  const fb=$("#wFs");
+  if(!document.documentElement.requestFullscreen)fb.hidden=true;
+  else fb.onclick=()=>{ if(document.fullscreenElement)document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(()=>toast("المتصفح منع ملء الشاشة")) };
 };
 
 V.dashboard=()=>{
