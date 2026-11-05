@@ -50,7 +50,7 @@ async function loadCat(){
       if(stop)break;
     }
     const rows=[];catMeta=null;
-    docs.forEach(d=>{(d.data.rows||[]).forEach(r=>rows.push(r));if(d.id==="c000")catMeta={count:d.data.count,at:d.data.at,source:d.data.source}});
+    docs.forEach(d=>{(d.data.rows||[]).forEach(r=>rows.push(r));if(d.id==="c000")catMeta={count:d.data.count,at:d.data.at,source:d.data.source,changes:d.data.changes}});
     CAT=rows.map(r=>[...r,nrm(r[0]+" "+r[1]+" "+r[2]+" "+r[3])]);
   }catch(e){CAT=[]}
   catLoading=false;if(curTab()==="catalog")render();
@@ -59,10 +59,13 @@ V.catalog=()=>{
   if(!CAT){$("#view").innerHTML=`<div class="card empty">جاري تحميل الدليل…</div>`;loadCat();return}
   if(!CAT.length){$("#view").innerHTML=`<div class="card empty">ملفات الدليل الدوائي غير موجودة في الموقع (public/catalog).</div>`;return}
   const at=catMeta&&catMeta.at?new Date(catMeta.at).toLocaleDateString("en-GB"):"-";
+  const stale=catMeta&&catMeta.at?Math.floor((Date.now()-new Date(catMeta.at).getTime())/864e5):0;
   $("#view").innerHTML=`<div class="kpis"><div class="kpi"><span>عدد الأدوية في الدليل</span><b>${CAT.length.toLocaleString("en-US")}</b></div>
-   <div class="kpi"><span>تاريخ الاستيراد</span><b style="font-size:20px">${at}</b><small>${esc(catMeta?.source||"")}</small></div></div>
+   <div class="kpi"><span>آخر تحديث للدليل</span><b style="font-size:20px">${at}</b><small>${esc(catMeta?.source||"")}</small></div>
+   ${catMeta&&catMeta.changes?`<div class="kpi"><span>آخر تغييرات</span><b style="font-size:18px">+${catMeta.changes.added} جديد · ${catMeta.changes.priceChanged} سعر</b><small>${catMeta.changes.removed} صنف حُذف</small></div>`:""}</div>
+  ${stale>45?`<div class="warnbox">لم يُحدَّث الدليل منذ ${stale} يوما. تحقق من مهمة التحديث التلقائي في GitHub Actions.</div>`:""}
   <div class="tbar sec"><label class="f2" style="max-width:520px">بحث بالاسم التجاري أو المادة الفعالة أو الشركة (عربي أو إنجليزي)<input id="cq" value="${esc(catQ)}" autocomplete="off" placeholder="مثال: panadol أو باراسيتامول"></label>
-   </div>
+   <button id="cPrices" type="button" ${canDo("editItems")?"":"hidden"}>مقارنة أسعار أصنافي بالدليل</button></div>
   <div id="cRes"></div>
   <p class="note">البيانات من قاعدة مفتوحة تجمّعها المجتمع من سجلات الأدوية المصرية، وليست نسخة رسمية من هيئة الدواء. الأسماء العربية قد تكون نقلا صوتيا، والأسعار تتغير باستمرار. راجع <a href="https://www.edaegypt.gov.eg" target="_blank" rel="noopener" style="color:var(--accent)">هيئة الدواء المصرية</a> وسعّر أصنافك من فواتير الشراء الفعلية.</p>`;
   const draw=()=>{
@@ -78,5 +81,26 @@ V.catalog=()=>{
     const m=$("#cMore");if(m)m.onclick=()=>{catShow+=60;draw()};
   };
   let t;$("#cq").oninput=e=>{catQ=e.target.value;catShow=60;clearTimeout(t);t=setTimeout(draw,120)};
+  $("#cPrices").onclick=priceSync;
   draw();
 };
+/* items in stock whose public price differs from the latest catalog price */
+function priceDiffs(){
+  const m=new Map();CAT.forEach(r=>m.set(nrm(r[0]),r));
+  return S.products.map(p=>{const r=m.get(nrm(p.name));return r&&r[6]>0&&Math.abs(num(p.price)-r[6])>0.005?{p,old:num(p.price),nw:r[6]}:null}).filter(Boolean);
+}
+function priceSync(){
+  const d=priceDiffs();
+  openModal(`<h2>مقارنة الأسعار بالدليل</h2>${d.length?`<p class="note">${d.length} صنف سعره في مخزونك يختلف عن الدليل. اختر ما تريد تحديثه.</p>
+   <div class="tw" style="max-height:50vh;overflow:auto"><table><tr><th></th><th>الصنف</th><th class="n">سعرك</th><th class="n">سعر الدليل</th></tr>
+   ${d.map((x,i)=>`<tr><td><input type="checkbox" data-pc="${i}" checked style="width:auto"></td><td class="wrap">${esc(x.p.name)}</td><td class="n">${money(x.old)}</td><td class="n"><b>${money(x.nw)}</b></td></tr>`).join("")}</table></div>
+   <div class="row" style="margin-top:10px"><button class="pri" id="pcGo" type="button">تطبيق الأسعار المحددة</button><button id="pcX" type="button">إغلاق</button></div>`
+   :`<div class="card empty">أسعار أصنافك مطابقة للدليل.</div><div class="row" style="margin-top:10px"><button id="pcX" type="button">إغلاق</button></div>`}`,true);
+  $("#pcX").onclick=closeModal;
+  const go=$("#pcGo");if(go)go.onclick=async()=>{
+    go.disabled=true;let n=0;
+    for(const c of $$("[data-pc]")){if(!c.checked)continue;const x=d[+c.dataset.pc];const cur=S.products.find(p=>p.id===x.p.id);if(!cur)continue;
+      const{id,...o}=cur;await store.save("products",id,{...o,price:x.nw});n++}
+    audit("تحديث أسعار من الدليل",n+" صنف");closeModal();toast("تم تحديث سعر "+n+" صنف");
+  };
+}
