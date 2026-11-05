@@ -145,9 +145,12 @@ td.wrap{white-space:normal;min-width:160px}
 .sugg ul{position:absolute;inset:100% 0 auto;z-index:5;margin:2px 0 0;padding:0;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;max-height:260px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.14)}
 .sugg li{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
 .sugg li:hover,.sugg li.on{background:var(--soft)}
-.modal{position:fixed;inset:0;z-index:50;background:rgba(8,20,18,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:20px 12px}
+/* the dialog is a normal (absolute) layer that grows with its content and is never clipped; the page itself scrolls.
+   The dimming is a separate fixed layer behind it. */
+.modal{position:absolute;top:0;left:0;right:0;z-index:50;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;overflow:visible;padding:20px 12px 40px}
+.modal::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(8,20,18,.55);z-index:-1}
 .modal[hidden]{display:none}
-.sheet{background:var(--surface);border-radius:12px;width:100%;max-width:640px;padding:18px;border:1px solid var(--line)}
+.sheet{position:relative;background:var(--surface);border-radius:12px;width:100%;max-width:640px;padding:18px;border:1px solid var(--line)}
 .sheet.wide{max-width:900px}
 .inv{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:18px;margin:12px 0}
 .inv h4{margin:0;font-family:var(--f-disp);font-size:20px;text-align:center}
@@ -184,8 +187,8 @@ ${css}
 /* short windows (small laptops, zoomed pages, docked devtools): don't let sticky bars eat the screen */
 @media (max-height:640px){
   .hdr{position:static}
-  .modal{position:absolute;inset:0 0 auto 0;min-height:100%;overflow:visible;padding:8px}
-  .sheet{padding:14px;margin-bottom:8px}
+  .modal{padding:8px 8px 24px}
+  .sheet{padding:14px}
 }
 @media (max-height:640px) and (min-width:881px){
   .side{position:static;height:auto;min-height:100%;overflow:visible}

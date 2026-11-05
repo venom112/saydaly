@@ -20,7 +20,7 @@ const COLLS=["products","sales","purchases","counts","parties","ledger","sreturn
 let downloads=null,store=null;
 
 function toast(msg){const t=$("#toastMsg");t.textContent=msg;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("on"),2200)}
-function openModal(html,wide){const m=$("#modal");$("#sheet").className="sheet"+(wide?" wide":"");$("#sheet").innerHTML=html;m.hidden=false;window.scrollTo(0,0)}
+function openModal(html,wide){const m=$("#modal");$("#sheet").className="sheet"+(wide?" wide":"");$("#sheet").innerHTML=html;m.style.top=(window.scrollY||0)+"px";m.hidden=false}
 function closeModal(){$("#modal").hidden=true;$("#sheet").innerHTML="";if(S.ready&&me)setTimeout(render,0)}
 $("#modal").addEventListener("mousedown",e=>{if(e.target.id==="modal")closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#modal").hidden)closeModal()});
