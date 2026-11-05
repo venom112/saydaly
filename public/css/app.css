@@ -194,3 +194,11 @@ ${css}
   .side{position:static;height:auto;min-height:100%;overflow:visible}
 }
 @media (max-height:640px) and (max-width:880px){.side{position:static}}
+
+.hero.big{flex-direction:column;text-align:center;justify-content:center;gap:22px;max-width:760px;margin:6vh auto 0;padding:34px 26px;border-inline-start:1px solid var(--line);border-top:5px solid var(--accent)}
+.hero.big .hero-main{flex-direction:column;gap:12px}
+.hero.big .hero-main .lg-img,.hero.big .cross{width:96px!important;height:96px!important}
+.hero.big h2{font-size:32px}
+.hero.big .hero-app{font-size:15px}
+.hero.big .hero-dev{align-items:center;width:100%;max-width:420px}
+.hero.big .hero-dev a.wa{align-self:center}

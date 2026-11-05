@@ -1,7 +1,7 @@
 /* ---------- login, users and permissions ---------- */
 let me=null,usersReady=false;
 const PERM_TABS=[
-  ["الرئيسية",[["dashboard","لوحة التحكم"]]],
+  ["الرئيسية",[["dashboard","ملخص اليوم"]]],
   ["المبيعات",[["sale","نقطة البيع"],["invoices","فواتير البيع"],["sreturn","مرتجع بيع"],["shift","الوردية والصندوق"]]],
   ["المشتريات",[["purchase","فاتورة شراء"],["plist","سجل المشتريات"],["preturn","مرتجع شراء"]]],
   ["المخزون",[["items","الأصناف"],["catalog","الدليل الدوائي"],["stocktake","الجرد"],["expiry","الصلاحيات"],["barcode","الباركود"],["alt","بدائل الدواء"],["short","النواقص"]]],
@@ -16,7 +16,7 @@ const PRESETS={
 };
 const ADMIN_ONLY=["settings","users","backup","audit"];
 const isAdmin=()=>!!me&&me.role==="admin";
-const can=t=>!!me&&(me.role==="admin"||(!ADMIN_ONLY.includes(t)&&!!(me.perms&&me.perms.tabs&&me.perms.tabs[t])));
+const can=t=>!!me&&(t==="welcome"||me.role==="admin"||(!ADMIN_ONLY.includes(t)&&!!(me.perms&&me.perms.tabs&&me.perms.tabs[t])));
 const canDo=a=>!!me&&(me.role==="admin"||!!(me.perms&&me.perms.acts&&me.perms.acts[a]));
 
 /* ---- session ---- */
@@ -41,7 +41,7 @@ $("#fLogin").onsubmit=async e=>{
   b.disabled=false;
   if(err){$("#lgErr").textContent=err;$("#lgPass").value="";$("#lgPass").focus();return}
   $("#lgErr").textContent="";$("#lgPass").value="";
-  await startData();enterApp();
+  await startData();location.hash="#welcome";enterApp();
 };
 function enterApp(){
   document.body.classList.remove("locked");$("#login").hidden=true;
