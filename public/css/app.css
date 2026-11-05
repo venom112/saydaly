@@ -29,7 +29,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--f-disp);font-size:21px;font-weight:700;padding:4px 8px 16px;color:#fff}
 .cross{width:30px;height:30px;border-radius:8px;background:var(--side-hi);position:relative;flex:none}
 .cross::before,.cross::after{content:"";position:absolute;background:#073027;border-radius:1px}
-.cross::before{inset:8px 13px}.cross::after{inset:13px 8px}
+.cross::before{inset:27% 43%}.cross::after{inset:43% 27%}
 #gnav{display:flex;flex-direction:column;gap:2px}
 #gnav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:var(--side-ink);text-decoration:none;font-weight:500}
 #gnav a svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -167,3 +167,27 @@ td.wrap{white-space:normal;min-width:160px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 ${css}
+/* home banner + logo */
+.lg-img{width:30px;height:30px;object-fit:contain;border-radius:8px;background:#fff;flex:none}
+.hero{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--accent);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.hero-main{display:flex;align-items:center;gap:14px;min-width:0}
+.hero-main .lg-img{width:64px;height:64px;border:1px solid var(--line)}
+.hero h2{margin:0;font-family:var(--f-disp);font-size:24px}
+.hero-app{color:var(--accent);font-weight:700;font-size:13px}
+.hero-dev{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);background:var(--soft);border-radius:10px;padding:10px 14px}
+.hero-dev b{color:var(--ink);font-size:14px}
+.hero-dev a{color:var(--accent);text-decoration:none;font-weight:600;word-break:break-all}
+.hero-dev a.wa{align-self:flex-start;margin-top:4px;background:var(--accent);color:var(--accent-ink);padding:4px 12px;border-radius:99px}
+.logoset{display:flex;gap:14px;align-items:center;margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:10px}
+.logoset .lg-img{border:1px solid var(--line)}
+@media print{.hero{display:none}}
+/* short windows (small laptops, zoomed pages, docked devtools): don't let sticky bars eat the screen */
+@media (max-height:640px){
+  .hdr{position:static}
+  .modal{padding:8px;height:100vh;height:100dvh}
+  .sheet{padding:14px;margin-bottom:8px}
+}
+@media (max-height:640px) and (min-width:881px){
+  .side{position:static;height:auto;min-height:100%;overflow:visible}
+}
+@media (max-height:640px) and (max-width:880px){.side{position:static}}

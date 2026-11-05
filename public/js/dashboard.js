@@ -14,7 +14,18 @@ V.dashboard=()=>{
     const v=S.sales.filter(s=>s.date===k).reduce((a,s)=>a+num(s.total),0)-S.sreturns.filter(r=>r.date===k).reduce((a,r)=>a+num(r.total),0);
     days.push({k,v,l:d.toLocaleDateString("ar-EG",{weekday:"short"})})}
   const mx=Math.max(1,...days.map(d=>d.v));
-  $("#view").innerHTML=`
+  const st=S.settings,tel=x=>esc(x),waNo="2"+DEV.phone;
+  const hello=`<section class="hero">
+    <div class="hero-main">${logoHtml(st.logo,64)}<div>
+      <div class="hero-app">${APP_NAME} · نظام إدارة الصيدليات</div>
+      <h2>${esc(st.name||"صيدلية")}</h2>
+      <p class="hsub">${[st.address&&esc(st.address),st.phone&&`<span dir="ltr">${tel(st.phone)}</span>`,st.phone2&&`<span dir="ltr">${tel(st.phone2)}</span>`].filter(Boolean).join(" · ")||(me&&me.role==="admin"?`أضف العنوان والهاتف والشعار من «الإعدادات ← بيانات الصيدلية».`:"")}</p></div></div>
+    <div class="hero-dev"><b>المبرمج: ${esc(DEV.name)}</b>
+      <span>هاتف وواتساب: <a href="tel:+2${DEV.phone}" dir="ltr">${DEV.phone}</a></span>
+      <span>البريد: <a href="mailto:${DEV.email}" dir="ltr">${DEV.email}</a></span>
+      <a class="wa" href="https://wa.me/${waNo}" target="_blank" rel="noopener">مراسلة على واتساب</a></div>
+  </section>`;
+  $("#view").innerHTML=`${hello}
   ${ps.length?"":`<div class="card" style="margin-bottom:14px"><b>ابدأ من هنا:</b> أضف أصنافك من «المخزون ← الأصناف» أو استورد «الدليل الدوائي» وأضف منه، ثم سجّل فاتورة شراء لإدخال الكميات، وبعدها ابدأ البيع.</div>`}
   <div class="kpis">
     <div class="kpi"><span>صافي مبيعات اليوم</span><b>${money(sold)}</b><small>${ts.length} فاتورة · ${CUR}</small></div>

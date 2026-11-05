@@ -12,7 +12,9 @@ const lsGet=k=>{try{return localStorage.getItem(k)==="1"}catch(e){return false}}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmtDate=ts=>{const d=new Date(ts);return d.toLocaleDateString("en-GB")+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
 
-const DEF_SET={name:"صيدلية",address:"",phone:"",tax:"",vatRate:0,expMonths:3};
+const DEF_SET={name:"صيدلية",address:"",phone:"",phone2:"",logo:"",tax:"",vatRate:0,expMonths:3};
+const APP_NAME="صيدلي";
+const DEV={name:"العجوز",phone:"01002540876",email:"pharmacysystem731@gmail.com"};
 const S={products:[],sales:[],purchases:[],counts:[],parties:[],ledger:[],users:[],sreturns:[],preturns:[],writeoffs:[],expenses:[],shifts:[],audit:[],settings:{...DEF_SET},ready:false};
 const COLLS=["products","sales","purchases","counts","parties","ledger","sreturns","preturns","writeoffs","expenses","shifts","audit","meta"];
 let downloads=null,store=null;
@@ -136,3 +138,14 @@ async function saveFile(filename,data){
 function printDoc(title,css,body){
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style></head><body>${body}</body></html>`;
 }
+
+/* ---- logo helpers ---- */
+function logoHtml(src,px){return src?`<img class="lg-img" src="${esc(src)}" alt="شعار" width="${px}" height="${px}">`:`<span class="cross" style="width:${px}px;height:${px}px"></span>`}
+function logoEl(src,px){const i=document.createElement("img");i.className="lg-img";i.src=src;i.alt="شعار";i.width=px;i.height=px;return i}
+function crossEl(){const s=document.createElement("span");s.className="cross";return s}
+function shrinkImage(file,max){return new Promise((ok,no)=>{
+  if(!/^image\/(png|jpeg|webp)$/.test(file.type))return no(new Error("type"));
+  const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(u);const k=Math.min(1,max/Math.max(im.width,im.height)),w=Math.max(1,Math.round(im.width*k)),h=Math.max(1,Math.round(im.height*k));
+    const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);ok(c.toDataURL("image/png"))};
+  im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("img"))};im.src=u})}

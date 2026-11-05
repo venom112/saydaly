@@ -6,16 +6,27 @@ V.settings=()=>{
   $("#view").innerHTML=`<form id="fSet" class="card" style="max-width:720px"><h3>بيانات تظهر على الفاتورة</h3>
    <div class="grid"><label>اسم الصيدلية<input id="stName" value="${esc(s.name)}"></label>
    <label>العنوان<input id="stAddr" value="${esc(s.address)}"></label>
-   <div class="row"><label class="f1">الهاتف<input id="stPhone" value="${esc(s.phone)}"></label><label class="f1">الرقم الضريبي<input id="stTax" value="${esc(s.tax)}"></label></div></div>
+   <div class="row"><label class="f1">الهاتف<input id="stPhone" value="${esc(s.phone)}" inputmode="tel"></label><label class="f1">هاتف آخر (اختياري)<input id="stPhone2" value="${esc(s.phone2||"")}" inputmode="tel"></label></div>
+   <label>الرقم الضريبي<input id="stTax" value="${esc(s.tax)}"></label>
+   <div class="logoset"><div id="stLogoPrev">${logoHtml(s.logo,56)}</div>
+    <div><b>شعار الصيدلية</b><p class="note" style="margin:2px 0 8px">صورة PNG أو JPG، تُصغَّر تلقائيا. يظهر في الصفحة الرئيسية والقائمة وشاشة الدخول.</p>
+    <div class="row"><button type="button" id="stLogoBtn">اختيار صورة</button><button type="button" id="stLogoDel" ${s.logo?"":"hidden"}>إزالة الشعار</button></div>
+    <input id="stLogoFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div></div></div>
    <h3 style="margin-top:20px">الضريبة والتنبيهات</h3>
    <div class="row"><label class="f1">نسبة ضريبة القيمة المضافة %<input id="stVat" type="number" min="0" max="100" step="0.01" value="${num(s.vatRate)}"></label>
     <label class="f1">التنبيه قبل الانتهاء (شهور)<input id="stExp" type="number" min="1" max="24" value="${num(s.expMonths)||3}"></label></div>
    <label style="margin-top:12px;max-width:340px">قفل تلقائي بعد عدم النشاط (دقائق، 0 = معطّل)<input id="stLock" type="number" min="0" max="240" value="${num(s.lockMin)}"></label>
    <p class="note">أسعار البيع تُعتبر شاملة الضريبة، وتظهر قيمتها على الفاتورة وفي التقارير. اتركها 0 إذا كانت أصنافك معفاة.</p>
    <div class="row" style="margin-top:14px"><button class="pri" type="submit">حفظ الإعدادات</button></div></form>`;
+  let logo=s.logo||"";
+  const showLogo=()=>{$("#stLogoPrev").innerHTML=logoHtml(logo,56);$("#stLogoDel").hidden=!logo};
+  $("#stLogoBtn").onclick=()=>$("#stLogoFile").click();
+  $("#stLogoDel").onclick=()=>{logo="";showLogo()};
+  $("#stLogoFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+    try{logo=await shrinkImage(f,256);showLogo()}catch(x){toast("تعذر قراءة الصورة")}};
   $("#fSet").onsubmit=async e=>{e.preventDefault();
     audit("تعديل الإعدادات","بيانات الصيدلية/الضريبة/القفل التلقائي");
-    await store.save("meta","settings",{...S.settings,lockMin:Math.max(0,Math.floor(num($("#stLock").value))),name:$("#stName").value.trim()||"صيدلية",address:$("#stAddr").value.trim(),phone:$("#stPhone").value.trim(),tax:$("#stTax").value.trim(),
+    await store.save("meta","settings",{...S.settings,lockMin:Math.max(0,Math.floor(num($("#stLock").value))),name:$("#stName").value.trim()||"صيدلية",address:$("#stAddr").value.trim(),phone:$("#stPhone").value.trim(),phone2:$("#stPhone2").value.trim(),logo,tax:$("#stTax").value.trim(),
       vatRate:Math.max(0,num($("#stVat").value)),expMonths:Math.max(1,Math.floor(num($("#stExp").value))||3)});
     toast("تم حفظ الإعدادات")};
 };
@@ -45,6 +56,8 @@ function firstAllowed(){for(const g of GROUPS)for(const t of g.tabs)if(can(t[0])
 function curTab(){const h=(location.hash||"#dashboard").slice(1);return TABS[h]&&can(h)?h:firstAllowed()}
 function render(){
   $("#shopName").textContent=S.settings.name||"صيدلية";$("#lgShop").textContent=S.settings.name||"صيدلية";
+  document.querySelectorAll(".logo .cross,.logo2 .cross,.logo img.lg-img,.logo2 img.lg-img").forEach(el=>el.remove());
+  ["#shopName","#lgShop"].forEach(q=>{const el=$(q);el.parentNode.insertBefore(S.settings.logo?logoEl(S.settings.logo,30):crossEl(),el)});
   if(!me){
     document.body.classList.add("locked");
     if(usersReady)showLogin();else{$("#login").hidden=false;$("#lgBtn").disabled=true;$("#lgBtn").textContent="جاري التحميل…"}
