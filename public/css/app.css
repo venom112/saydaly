@@ -184,7 +184,7 @@ ${css}
 /* short windows (small laptops, zoomed pages, docked devtools): don't let sticky bars eat the screen */
 @media (max-height:640px){
   .hdr{position:static}
-  .modal{padding:8px;height:100vh;height:100dvh}
+  .modal{position:absolute;inset:0 0 auto 0;min-height:100%;overflow:visible;padding:8px}
   .sheet{padding:14px;margin-bottom:8px}
 }
 @media (max-height:640px) and (min-width:881px){
