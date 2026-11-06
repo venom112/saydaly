@@ -56,8 +56,8 @@ function firstAllowed(){for(const g of GROUPS)for(const t of g.tabs)if(can(t[0])
 function curTab(){const h=(location.hash||"#welcome").slice(1);return TABS[h]&&can(h)?h:firstAllowed()}
 function render(){
   $("#shopName").textContent=S.settings.name||"صيدلية";$("#lgShop").textContent=S.settings.name||"صيدلية";
-  document.querySelectorAll(".logo .cross,.logo2 .cross,.logo img.lg-img,.logo2 img.lg-img").forEach(el=>el.remove());
-  ["#shopName","#lgShop"].forEach(q=>{const el=$(q);el.parentNode.insertBefore(S.settings.logo?logoEl(S.settings.logo,30):crossEl(),el)});
+  document.querySelectorAll(".logo .wordmark,.logo2 .wordmark,.logo .cross,.logo2 .cross,.logo img.lg-img,.logo2 img.lg-img").forEach(el=>el.remove());
+  ["#shopName","#lgShop"].forEach(q=>{const el=$(q);el.parentNode.insertBefore(S.settings.logo?logoEl(S.settings.logo,30):crossEl(),el);el.parentNode.classList.toggle("nologo",!S.settings.logo)});
   if(!me){
     document.body.classList.add("locked");
     if(usersReady)showLogin();else{$("#login").hidden=false;$("#lgBtn").disabled=true;$("#lgBtn").textContent="جاري التحميل…"}

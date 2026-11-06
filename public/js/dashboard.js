@@ -4,7 +4,7 @@ V.welcome=()=>{
   const st=S.settings,waNo="2"+DEV.phone;
   const hello=`<section class="welcome">
     <button type="button" class="sm w-fs" id="wFs">ملء الشاشة</button>
-    <div class="w-logo">${logoHtml(st.logo,240)}</div>
+    ${st.logo?`<div class="w-logo">${logoHtml(st.logo,240)}</div>`:""}
     <h2 class="w-app">${APP_NAME}</h2>
     <div class="w-sub">نظام إدارة الصيدليات</div>
     <div class="w-shop">${esc(st.name||"صيدلية")}</div>

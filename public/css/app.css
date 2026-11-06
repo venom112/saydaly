@@ -226,3 +226,12 @@ ${css}
 .scanguide{position:absolute;inset:22% 8%;border:3px solid #4fd1a5;border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35);pointer-events:none}
 .scanmsg{margin:0;text-align:center;color:#cfe8e0}
 .scanbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* default logo = the system name */
+.wordmark{font-family:var(--f-disp);font-weight:800;line-height:1.1;color:var(--accent);white-space:nowrap}
+.logo .wordmark{color:#fff;font-size:30px;letter-spacing:0}
+.logo.nologo{flex-direction:column;align-items:flex-start;gap:2px}
+.logo.nologo #shopName{font-size:13px;font-weight:600;color:#a9c9bf}
+.logo2.nologo{flex-direction:column;gap:2px;align-items:center}
+.logo2 .wordmark{font-size:44px}.logo2.nologo #lgShop{font-size:16px;color:var(--muted)}
+.logoset .wordmark{font-size:26px;border:1px solid var(--line);border-radius:10px;padding:8px 12px}

@@ -140,9 +140,9 @@ function printDoc(title,css,body){
 }
 
 /* ---- logo helpers ---- */
-function logoHtml(src,px){return src?`<img class="lg-img" src="${esc(src)}" alt="شعار" width="${px}" height="${px}">`:`<span class="cross" style="width:${px}px;height:${px}px"></span>`}
+function logoHtml(src,px){return src?`<img class="lg-img" src="${esc(src)}" alt="شعار" width="${px}" height="${px}">`:`<span class="wordmark" style="font-size:${Math.round(px*.5)}px">${APP_NAME}</span>`}
 function logoEl(src,px){const i=document.createElement("img");i.className="lg-img";i.src=src;i.alt="شعار";i.width=px;i.height=px;return i}
-function crossEl(){const s=document.createElement("span");s.className="cross";return s}
+function crossEl(){const s=document.createElement("span");s.className="wordmark";s.textContent=APP_NAME;return s}
 function shrinkImage(file,max){return new Promise((ok,no)=>{
   if(!/^image\/(png|jpeg|webp)$/.test(file.type))return no(new Error("type"));
   const u=URL.createObjectURL(file),im=new Image();
