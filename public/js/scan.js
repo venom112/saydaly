@@ -44,13 +44,76 @@ function normCode(t){
   if(m){const g=m[1];return g[0]==="0"?g.slice(1):g}
   return t;
 }
+/* ---- live camera scanner: opens the camera and reads barcodes continuously (BarcodeDetector where the browser has it, ZXing otherwise) ---- */
+const canLive=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.isSecureContext!==false);
+const LIVE_FORMATS=["ean_13","ean_8","upc_a","upc_e","code_128","code_39","itf","data_matrix","qr_code"];
+let scanOpen=false;
+async function openScanner(onCode,onFallback){
+  if(scanOpen)return;scanOpen=true;
+  let stream=null,stopped=false,timer=null,track=null;
+  const layer=document.createElement("div");layer.className="scanlayer";layer.style.top=(window.scrollY||0)+"px";
+  layer.innerHTML=`<div class="scanbox"><div class="scantop"><b>مسح الباركود</b><button type="button" class="sm" id="scX">إغلاق</button></div>
+    <div class="scanview"><video id="scV" playsinline muted autoplay></video><div class="scanguide"></div></div>
+    <p class="scanmsg" id="scMsg">جاري فتح الكاميرا…</p>
+    <div class="scanbtns"><button type="button" class="sm" id="scTorch" hidden>الفلاش</button><button type="button" class="sm" id="scPhoto">التقاط صورة بدلا من ذلك</button></div></div>`;
+  document.body.appendChild(layer);const prevOv=document.body.style.overflow;document.body.style.overflow="hidden";
+  const msg=t=>{const m=layer.querySelector("#scMsg");if(m)m.textContent=t};
+  const stop=()=>{if(stopped)return;stopped=true;clearTimeout(timer);try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}
+    layer.remove();document.body.style.overflow=prevOv;scanOpen=false;document.removeEventListener("keydown",esc)};
+  const esc=e=>{if(e.key==="Escape")stop()};document.addEventListener("keydown",esc);
+  layer.querySelector("#scX").onclick=stop;
+  layer.querySelector("#scPhoto").onclick=()=>{stop();onFallback&&onFallback()};
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}});
+  }catch(e){
+    stop();toast(e&&e.name==="NotAllowedError"?"اسمح للموقع باستخدام الكاميرا من إعدادات المتصفح ثم أعد المحاولة.":"تعذر فتح الكاميرا.");
+    onFallback&&onFallback();return;
+  }
+  if(stopped){stream.getTracks().forEach(t=>t.stop());return}
+  const v=layer.querySelector("#scV");v.srcObject=stream;try{await v.play()}catch(e){}
+  track=stream.getVideoTracks()[0];
+  try{const cp=track.getCapabilities&&track.getCapabilities();if(cp&&cp.torch){const tb=layer.querySelector("#scTorch");tb.hidden=false;let on=false;
+    tb.onclick=async()=>{on=!on;try{await track.applyConstraints({advanced:[{torch:on}]})}catch(e){on=!on}}}}catch(e){}
+  let det=null;
+  if("BarcodeDetector" in window){try{const sup=await BarcodeDetector.getSupportedFormats(),f=LIVE_FORMATS.filter(x=>sup.includes(x));if(f.length)det=new BarcodeDetector({formats:f})}catch(e){}}
+  let zx=null;
+  if(!det){
+    msg("جاري تحميل قارئ الباركود…");
+    if(!(await loadZX())){stop();toast("تعذر تحميل قارئ الباركود. تأكد من الاتصال بالإنترنت.");onFallback&&onFallback();return}
+    const Z=window.ZXing,h=new Map(),F=Z.BarcodeFormat;
+    h.set(Z.DecodeHintType.TRY_HARDER,true);h.set(Z.DecodeHintType.POSSIBLE_FORMATS,[F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E,F.CODE_128,F.CODE_39,F.ITF,F.DATA_MATRIX,F.QR_CODE]);
+    zx={Z,h,c:document.createElement("canvas")};
+  }
+  if(stopped)return;
+  msg("وجّه الكاميرا نحو الباركود");
+  const found=t=>{if(stopped)return;try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}stop();onCode(normCode(t))};
+  const tick=async()=>{
+    if(stopped)return;
+    try{
+      if(v.readyState>=2&&v.videoWidth){
+        if(det){const r=await det.detect(v);if(r.length&&r[0].rawValue)return found(r[0].rawValue)}
+        else{
+          const k=Math.min(1,960/v.videoWidth),w=Math.round(v.videoWidth*k),hh=Math.round(v.videoHeight*k);
+          zx.c.width=w;zx.c.height=hh;const x=zx.c.getContext("2d",{willReadFrequently:true});x.drawImage(v,0,0,w,hh);
+          const px=x.getImageData(0,0,w,hh).data,g=new Uint8ClampedArray(w*hh);
+          for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=(px[j]*299+px[j+1]*587+px[j+2]*114)/1000;
+          const rd=new zx.Z.MultiFormatReader();rd.setHints(zx.h);
+          try{return found(rd.decode(new zx.Z.BinaryBitmap(new zx.Z.HybridBinarizer(new zx.Z.RGBLuminanceSource(g,w,hh)))).getText())}catch(e){}
+        }
+      }
+    }catch(e){}
+    timer=setTimeout(tick,det?120:220);
+  };
+  tick();
+}
 function attachScan(input,onCode){
-  if(!input||!canScan()||input.dataset.scan)return;input.dataset.scan="1";
+  if(!input||!(canScan()||canLive())||input.dataset.scan)return;input.dataset.scan="1";
   const wrap=input.parentElement;wrap.classList.add("hasscan");
   const btn=document.createElement("button");btn.type="button";btn.className="scanbtn";
   btn.title="مسح الباركود بالكاميرا";btn.setAttribute("aria-label","مسح الباركود بالكاميرا");btn.innerHTML=SCAN_SVG;
   const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.setAttribute("capture","environment");fi.hidden=true;
-  btn.onclick=()=>{fi.value="";fi.click()};
+  const photo=()=>{fi.value="";fi.click()};
+  btn.onclick=()=>{if(canLive())openScanner(onCode,photo);else photo()};
   fi.onchange=async()=>{
     const f=fi.files[0];if(!f)return;btn.disabled=true;btn.classList.add("busy");
     try{const r=await decodeBarcode(f);

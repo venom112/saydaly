@@ -104,3 +104,10 @@ npm test             # اختبارات الـ API
 
 ## English summary
 Saydaly (صيدلي) — static front-end in `public/`, API in `src/worker.js` (Cloudflare Worker), data in D1. Deploy: push to GitHub → `npx wrangler d1 create pharmacy-db` → put the id in `wrangler.toml` → `npx wrangler deploy` (or use the included GitHub Action / Workers Builds). Default login `admin`/`admin` (change it, or set the `ADMIN_PASSWORD` secret before first use). Tables are created automatically on the first request.
+
+## الطباعة / Printing
+
+- **المقاس تلقائي حسب الطابعة**: فواتير البيع والشراء وملصقات الباركود تتكيف مع عرض الورق المختار في نافذة الطباعة (رول حراري 58/80 مم، A5، A4). اختر الطابعة ومقاس الورق من نافذة الطباعة في المتصفح، ولا حاجة لضبط مقاس داخل النظام. (المتصفح لا يكشف مقاس الورق لموقع ويب، لذلك التكيّف يتم على نافذة الطباعة نفسها.)
+- **ملصقات الباركود**: عند حفظ فاتورة الشراء تظهر نافذة فيها «طباعة الباركود» بعدد ملصقات = الكمية المُشتراة (قابل للتعديل لكل صنف). على الرول: ملصق لكل صفحة بمقاس الورق. على A4: شبكة بمقاس الملصق المختار.
+- **PDF**: زر «حفظ كملف PDF» يفتح نافذة الطباعة؛ اختر «حفظ كـ PDF» كطابعة.
+- **مسح الباركود بالكاميرا**: زر الكاميرا بجانب حقول الباركود/البحث يفتح الكاميرا ويقرأ مباشرة (يتطلب HTTPS وإذن الكاميرا). يستخدم قارئ المتصفح المدمج إن وُجد (Chrome على أندرويد) وإلا مكتبة ZXing من unpkg.

@@ -46,7 +46,7 @@ V.stocktake=()=>{
 };
 
 /* ---- barcode labels ---- */
-let bcPick={},bcOpt={size:"50x30",price:true,mode:"roll"};
+let bcPick={},bcOpt={size:"50x30",price:true,mode:"auto"};
 const C128="212222,222122,222221,121223,121322,131222,122213,122312,132212,221213,221312,231212,112232,122132,122231,113222,123122,123221,223211,221132,221231,213212,223112,312131,311222,321122,321221,312212,322112,322211,212123,212321,232121,111323,131123,131321,112313,132113,132311,211313,231113,231311,112133,112331,132131,113123,113321,133121,313121,211331,231131,213113,213311,213131,311123,311321,331121,312113,312311,332111,314111,221411,431111,111224,111422,121124,121421,141122,141221,112214,112412,122114,122411,142112,142211,241211,221114,413111,241112,134111,111242,121142,121241,114212,124112,124211,411212,421112,421211,212141,214121,412121,111143,111341,131141,114113,114311,411113,411311,113141,114131,311141,411131,211412,211214,211232,2331112".split(",");
 function c128vals(s){
   const v=[];
@@ -65,6 +65,21 @@ function labelHtml(p,w,h,showPrice){
   let svg="";try{svg=barSvg(p.barcode,Math.max(18,h*3.78*0.38))}catch(e){svg=`<span class="mono">${esc(p.barcode)}</span>`}
   return `<div class="lab" style="width:${w}mm;height:${h}mm"><div class="ln">${esc(p.name)}</div>${svg}${showPrice?`<div class="lp">${money(p.price)} ${CUR}</div>`:""}</div>`;
 }
+/* label sheet. mode "auto": on a narrow page (label roll / thermal printer) every label fills one page of whatever size the printer
+   is set to; on a wide page (A4...) labels are laid out in a grid at the chosen size. "roll"/"a4" force a fixed page. */
+function labelsDoc(entries,title){
+  const [w,h]=bcOpt.size.split("x").map(Number),items=[];
+  entries.forEach(({p,n})=>{for(let k=0;k<Math.min(500,Math.max(1,n));k++)items.push(labelHtml(p,w,h,bcOpt.price))});
+  const m=bcOpt.mode,roll=m==="roll",au=m==="auto";
+  const css=`@page{size:${au?"auto":roll?w+"mm "+h+"mm":"A4"};margin:${roll||au?"0":"8mm"}}body{margin:0;font-family:Tahoma,Arial,sans-serif}
+.lab{box-sizing:border-box;container-type:size;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding:1mm;gap:.5mm;background:#fff;color:#000}
+.lab svg{width:92%;height:auto;max-height:54%}.ln{font-size:max(6px,9cqh);font-weight:bold;line-height:1.1;max-height:2.3em;overflow:hidden;width:100%}.lp{font-size:max(6px,8.5cqh)}
+${roll?".lab{page-break-after:always;break-after:page}":au?`@media print and (max-width:120mm){.lab{width:100vw!important;height:100vh!important;page-break-after:always;break-after:page}}
+@media print and (min-width:121mm){.wrap{display:flex;flex-wrap:wrap;padding:8mm}.lab{border:.2mm dashed #bbb;margin:0 2mm 2mm 0}}
+@media screen{.wrap{display:flex;flex-wrap:wrap;gap:6px;padding:10px}.lab{border:1px dashed #999}}`
+ :".lab{border:.2mm dashed #bbb;margin:0 2mm 2mm 0}.wrap{display:flex;flex-wrap:wrap}"}`;
+  return printDoc(title||"ملصقات الباركود",css,roll?items.join(""):`<div class="wrap">${items.join("")}</div>`);
+}
 V.barcode=()=>{
   const ids=Object.keys(bcPick).filter(id=>S.products.some(p=>p.id===id));
   const [w,h]=bcOpt.size.split("x").map(Number);
@@ -75,16 +90,16 @@ V.barcode=()=>{
   <div class="card"><div class="row"><label class="f2">إضافة صنف<input id="bItem" autocomplete="off" placeholder="اسم أو باركود"></label>
     <button id="bAll" type="button">إضافة كل الأصناف</button><button id="bClr" type="button">مسح الاختيار</button></div>
    <div class="row" style="margin-top:12px"><label class="f1">مقاس الملصق (مم)<select id="bSize"><option value="50x30">50 × 30</option><option value="38x25">38 × 25</option><option value="60x40">60 × 40</option><option value="40x20">40 × 20</option></select></label>
-    <label class="f1">نوع الطباعة<select id="bMode"><option value="roll">رول ملصقات (ملصق في كل صفحة)</option><option value="a4">ورقة A4 (عدة ملصقات)</option></select></label>
+    <label class="f1">نوع الطباعة<select id="bMode"><option value="auto">تلقائي حسب الطابعة (موصى به)</option><option value="roll">رول ملصقات بالمقاس المختار (ملصق في كل صفحة)</option><option value="a4">ورقة A4 (عدة ملصقات)</option></select></label>
     <label class="f1" style="flex-direction:row;align-items:center;gap:8px;flex:0 0 auto"><input id="bPrice" type="checkbox" style="width:auto"> إظهار السعر</label></div></div>
   <div style="margin-top:14px">${ids.length?`<div class="tw"><table><tr><th>الصنف</th><th>الباركود</th><th>عدد الملصقات</th><th></th></tr>
    ${ids.map(id=>{const p=S.products.find(x=>x.id===id);return`<tr><td>${esc(p.name)}</td><td class="mono">${esc(p.barcode)}</td><td><input data-n="${id}" type="number" min="1" max="500" style="width:80px" value="${bcPick[id]}"></td><td><button class="sm dng" data-d="${id}" type="button">إزالة</button></td></tr>`}).join("")}</table></div>`
    :`<div class="card empty">لم يتم اختيار أصناف بعد</div>`}</div>
   ${ids.length&&hasLib?`<div class="bar" style="margin-top:14px"><h3 style="margin:0">معاينة (${total} ملصق)</h3>
-   <button class="pri" id="bDl" type="button" ${downloads?"":"disabled"}>تنزيل ملف الطباعة</button></div>
+   <button class="pri" id="bDl" type="button" ${downloads?"":"disabled"}>طباعة الملصقات</button></div>
    <div class="labels" id="bPrev">${ids.slice(0,12).map(id=>labelHtml(S.products.find(p=>p.id===id),w,h,bcOpt.price)).join("")}</div>
    ${ids.length>12?`<p class="note">المعاينة تعرض أول 12 صنفا فقط. الملف يحتوي كل الملصقات.</p>`:""}
-   <p class="note">بعد التنزيل افتح الملف على الجهاز المتصل بطابعة الباركود، وستظهر نافذة الطباعة تلقائيا.</p>`:""}`;
+   <p class="note">في الوضع التلقائي تُطبع كل ملصقة بمقاس الورق المختار في نافذة الطباعة (اختر طابعة الباركود ومقاس الملصق في إعدادات الطابعة). على ورق A4 تُرتّب الملصقات في شبكة بالمقاس المختار.</p>`:""}`;
   $("#bSize").value=bcOpt.size;$("#bMode").value=bcOpt.mode;$("#bPrice").checked=bcOpt.price;
   const opt=()=>{bcOpt={size:$("#bSize").value,mode:$("#bMode").value,price:$("#bPrice").checked};V.barcode()};
   ["#bSize","#bMode","#bPrice"].forEach(s=>$(s).onchange=opt);
@@ -93,14 +108,6 @@ V.barcode=()=>{
   $("#bClr").onclick=()=>{bcPick={};V.barcode()};
   $$("[data-n]").forEach(i=>i.onchange=()=>{bcPick[i.dataset.n]=Math.min(500,Math.max(1,Math.floor(num(i.value))));V.barcode()});
   $$("[data-d]").forEach(b=>b.onclick=()=>{delete bcPick[b.dataset.d];V.barcode()});
-  const dl=$("#bDl");if(dl)dl.onclick=()=>{
-    const items=[];ids.forEach(id=>{const p=S.products.find(x=>x.id===id);for(let k=0;k<bcPick[id];k++)items.push(labelHtml(p,w,h,bcOpt.price))});
-    const roll=bcOpt.mode==="roll";
-    const css=`@page{size:${roll?w+"mm "+h+"mm":"A4"};margin:${roll?"0":"8mm"}}body{margin:0;font-family:Tahoma,Arial,sans-serif}
-.lab{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding:1mm;${roll?"page-break-after:always;break-after:page;":"border:.2mm dashed #bbb;margin:0 2mm 2mm 0;"}}
-.lab svg{max-width:100%;height:auto}.ln{font-size:9px;font-weight:bold;line-height:1.1;max-height:2.2em;overflow:hidden}.lp{font-size:9px}
-${roll?"":".wrap{display:flex;flex-wrap:wrap}"}`;
-    saveFile("barcodes-"+today()+".html",printDoc("ملصقات الباركود",css,roll?items.join(""):`<div class="wrap">${items.join("")}</div>`));
-  };
+  const dl=$("#bDl");if(dl)dl.onclick=()=>saveFile("barcodes-"+today()+".html",labelsDoc(ids.map(id=>({p:S.products.find(x=>x.id===id),n:bcPick[id]}))));
 };
 

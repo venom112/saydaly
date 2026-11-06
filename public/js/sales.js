@@ -96,20 +96,31 @@ function invoiceBody(s){
    ${rem>0?`<div class="tot"><span>المدفوع</span><span>${money(s.paid)}</span></div><div class="tot"><span>المتبقي على العميل</span><span>${money(rem)}</span></div>`:""}</div>
   <p style="margin-top:12px">شكرا لزيارتكم · نتمنى لكم دوام الصحة</p>`;
 }
-const invCss=p=>`@page{size:${p==="a4"?"A4":p==="a5"?"A5":"80mm auto"};margin:${p==="r80"?"3mm":"10mm"}}body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:${p==="r80"?"11px":"13px"};margin:0}
-h4{margin:0;text-align:center;font-size:${p==="r80"?"16px":"20px"}}p{margin:2px 0;text-align:center}
+/* paper: "auto" adapts to whatever page the selected printer gives us (58/80 mm rolls, A5, A4...) using print media queries on the real page width */
+const paperPref=()=>{try{return localStorage.getItem("ph-paper")||"auto"}catch(e){return"auto"}};
+const invCss=p=>{
+  const r80=p==="r80",au=p==="auto",page=p==="a4"?"A4":p==="a5"?"A5":r80?"80mm auto":"auto";
+  return `@page{size:${page};margin:${au?"0":r80?"3mm":"10mm"}}
+body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:${r80?"11px":"13px"};margin:0;${au?"padding:8mm;":""}}
+h4{margin:0;text-align:center;font-size:${r80?"16px":"20px"}}p{margin:2px 0;text-align:center}
 table{border-collapse:collapse;width:100%;margin-top:8px}th,td{padding:4px 5px;text-align:right;border-bottom:1px solid #bbb}th{background:#eee}.n{text-align:left}
-.tot{display:flex;justify-content:space-between;padding:2px 0}.big{font-size:15px;font-weight:bold;border-top:1px solid #000;margin-top:4px;padding-top:6px}`;
+.tot{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.big{font-size:15px;font-weight:bold;border-top:1px solid #000;margin-top:4px;padding-top:6px}
+${r80?".c-x{display:none}":""}
+${au?`@media screen{body{max-width:210mm;margin:0 auto}}
+@media print and (max-width:110mm){body{padding:2.5mm;font-size:11px}h4{font-size:16px}th,td{padding:2px 3px}.c-x{display:none}.big{font-size:13px}}
+@media print and (min-width:111mm) and (max-width:160mm){body{padding:7mm;font-size:12px}}`:""}`;
+};
 function showInvoice(s){
   openModal(`<div class="bar" style="margin:0"><h2>فاتورة رقم ${s.no}</h2><button type="button" id="mX">إغلاق</button></div>
   <div class="inv">${invoiceBody(s)}</div>
-  <div class="row"><label class="f1">حجم الورق<select id="paper"><option value="a5">A5</option><option value="a4">A4</option><option value="r80">إيصال حراري 80 مم</option></select></label>
-   <button class="pri" id="mDl" type="button" ${downloads?"":"disabled"}>تنزيل ملف الطباعة</button>
+  <div class="row"><label class="f1">حجم الورق<select id="paper"><option value="auto">تلقائي (حسب الطابعة)</option><option value="a5">A5</option><option value="a4">A4</option><option value="r80">إيصال حراري 80 مم</option></select></label>
+   <button class="pri" id="mDl" type="button" ${downloads?"":"disabled"}>طباعة</button>
    ${s.id&&!s.void?`<button id="mRet" type="button">عمل مرتجع</button>`:""}
    ${s.id&&!s.void&&canDo("voidInv")?`<button id="mEdit" type="button">تعديل</button><button class="dng" id="mVoid" type="button">إلغاء الفاتورة</button>`:""}</div>
   ${s.void?`<div class="warnbox">فاتورة ملغاة بواسطة ${esc(s.voidBy||"-")} ${s.voidTs?fmtDate(s.voidTs):""}${s.voidWhy?" — "+esc(s.voidWhy):""}</div>`:""}
-  <p class="note">يُحفظ ملف جاهز للطباعة. افتحه على الجهاز واطبعه (تفتح نافذة الطباعة تلقائيا).</p>`);
+  <p class="note">«تلقائي» يضبط المقاس على الورق المختار في نافذة الطباعة (رول حراري أو A5 أو A4). تفتح نافذة الطباعة في تبويب جديد.</p>`);
   $("#mX").onclick=closeModal;
+  $("#paper").value=paperPref();$("#paper").onchange=()=>{try{localStorage.setItem("ph-paper",$("#paper").value)}catch(e){}};
   $("#mDl").onclick=()=>saveFile("invoice-"+s.no+".html",printDoc("فاتورة "+s.no,invCss($("#paper").value),invoiceBody(s)));
   const r=$("#mRet");if(r)r.onclick=()=>{retNo=String(s.no);closeModal();location.hash="#sreturn"};
   const me2=$("#mEdit");if(me2){me2.onclick=()=>editSale(s);$("#mVoid").onclick=()=>voidSaleDialog(s)}

@@ -82,34 +82,73 @@ function purchaseBody(x){
   const st=S.settings,rem=num(x.total)-num(x.paid??x.total);
   return `<h4>${esc(st.name||"صيدلية")}</h4><p><b>فاتورة شراء رقم ${x.no}</b>${x.invNo?" · فاتورة المورد: "+esc(x.invNo):""}</p>
   <p>${esc(x.date||"")} · المورد: ${esc(x.supplier||"-")}</p>
-  <table><tr><th>الصنف</th><th class="n">الكمية</th><th class="n">السعر</th><th>تشغيلة</th><th>الانتهاء</th><th class="n">الإجمالي</th></tr>
-  ${(x.items||[]).map(i=>`<tr><td style="white-space:normal">${esc(i.name)}</td><td class="n">${i.qty}${i.pk?" "+esc(i.u):""}</td><td class="n">${money(i.cost)}</td><td>${esc(i.batch||"-")}</td><td>${esc(i.exp||"-")}</td><td class="n">${money(i.qty*i.cost)}</td></tr>`).join("")}</table>
+  <table><tr><th>الصنف</th><th class="n">الكمية</th><th class="n">السعر</th><th class="c-x">تشغيلة</th><th class="c-x">الانتهاء</th><th class="n">الإجمالي</th></tr>
+  ${(x.items||[]).map(i=>`<tr><td style="white-space:normal">${esc(i.name)}</td><td class="n">${i.qty}${i.pk?" "+esc(i.u):""}</td><td class="n">${money(i.cost)}</td><td class="c-x">${esc(i.batch||"-")}</td><td class="c-x">${esc(i.exp||"-")}</td><td class="n">${money(i.qty*i.cost)}</td></tr>`).join("")}</table>
   <div style="margin-top:10px"><div class="tot big"><span>الإجمالي</span><span>${money(x.total)} ${CUR}</span></div>
   <div class="tot"><span>المدفوع</span><span>${money(x.paid??x.total)}</span></div>${rem>0?`<div class="tot"><span>المتبقي للمورد</span><span>${money(rem)}</span></div>`:""}</div>`;
 }
-const printPurchase=x=>saveFile("purchase-"+x.no+".html",printDoc("فاتورة شراء "+x.no,invCss("a4"),purchaseBody(x)));
-function labelsFile(entries,name){ // entries: [{p,n}]
-  const [w,h]=bcOpt.size.split("x").map(Number),items=[];
-  entries.forEach(({p,n})=>{for(let k=0;k<Math.min(500,Math.max(1,n));k++)items.push(labelHtml(p,w,h,bcOpt.price))});
-  const roll=bcOpt.mode==="roll";
-  const css=`@page{size:${roll?w+"mm "+h+"mm":"A4"};margin:${roll?"0":"8mm"}}body{margin:0;font-family:Tahoma,Arial,sans-serif}
-.lab{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding:1mm;${roll?"page-break-after:always;break-after:page;":"border:.2mm dashed #bbb;margin:0 2mm 2mm 0;"}}
-.lab svg{max-width:100%;height:auto}.ln{font-size:9px;font-weight:bold;line-height:1.1;max-height:2.2em;overflow:hidden}.lp{font-size:9px}
-${roll?"":".wrap{display:flex;flex-wrap:wrap}"}`;
-  return saveFile(name||("barcodes-"+today()+".html"),printDoc("ملصقات الباركود",css,roll?items.join(""):`<div class="wrap">${items.join("")}</div>`));
-}
+const printPurchase=(x,paper)=>saveFile("purchase-"+x.no+".html",printDoc("فاتورة-شراء-"+x.no,invCss(paper||paperPref()),purchaseBody(x)));
+const labelsFile=(entries,name)=>saveFile(name||("barcodes-"+today()+".html"),labelsDoc(entries));
 const labelEntries=x=>{const m={};(x.items||[]).forEach(l=>{const p=S.products.find(q=>q.id===l.pid);if(!p||!p.barcode)return;m[l.pid]=m[l.pid]||{p,n:0};m[l.pid].n+=Math.max(1,Math.ceil(num(l.qty)*(num(l.r)||1)-1e-9))});return Object.values(m)};
+const paperSel=()=>`<label class="f1">ورق الفاتورة<select id="pvPaper"><option value="auto">تلقائي (حسب الطابعة)</option><option value="a4">A4</option><option value="a5">A5</option><option value="r80">إيصال حراري 80 مم</option></select></label>`;
+const wirePaper=()=>{const e=$("#pvPaper");if(!e)return;e.value=paperPref();e.onchange=()=>{try{localStorage.setItem("ph-paper",e.value)}catch(x){}}};
+/* the labels to print for a purchase: one per purchased pack by default, the counts can be edited before printing */
+function purchaseLabelsDialog(x,back){
+  const rows=labelEntries(x),noBc=(x.items||[]).filter(l=>{const p=S.products.find(q=>q.id===l.pid);return !p||!p.barcode});
+  openModal(`<div class="bar" style="margin:0"><h2>طباعة باركود فاتورة الشراء ${x.no}</h2><button type="button" id="lbX">${back?"رجوع":"إغلاق"}</button></div>
+   ${rows.length?`<div class="tw"><table><tr><th>الصنف</th><th>الباركود</th><th class="n">عدد الملصقات</th></tr>
+   ${rows.map((r,i)=>`<tr><td>${esc(r.p.name)}</td><td class="mono">${esc(r.p.barcode)}</td><td class="n"><input data-ln="${i}" type="number" min="0" max="500" value="${r.n}" style="width:80px"></td></tr>`).join("")}</table></div>`
+   :`<div class="card empty">لا توجد أصناف لها باركود في هذه الفاتورة.</div>`}
+   ${noBc.length?`<p class="note">أصناف بدون باركود (لن تُطبع لها ملصقات): ${noBc.map(l=>esc(l.name)).join("، ")}. أضف لها باركودا من «المخزون ← الأصناف».</p>`:""}
+   <div class="row" style="margin-top:12px"><label class="f1">طريقة الطباعة<select id="lbMode"><option value="auto">تلقائي حسب الطابعة (موصى به)</option><option value="roll">رول ملصقات بالمقاس المختار</option><option value="a4">ورقة A4 (شبكة ملصقات)</option></select></label>
+    <label class="f1">مقاس الملصق (مم)<select id="lbSize">${["50x30","38x25","60x40","40x20","70x40"].map(z=>`<option value="${z}">${z.replace("x"," × ")}</option>`).join("")}</select></label>
+    <label style="flex-direction:row;align-items:center;gap:8px;flex:0 0 auto"><input id="lbPrice" type="checkbox" style="width:auto"> إظهار السعر</label></div>
+   <div class="row" style="margin-top:12px"><button class="pri" id="lbGo" type="button" ${rows.length&&downloads?"":"disabled"}>طباعة الملصقات</button></div>
+   <p class="note">في الوضع التلقائي تُطبع كل ملصقة بمقاس الورق المختار في نافذة الطباعة. تأكد أن مقاس الورق في إعدادات طابعة الباركود هو مقاس الملصق.</p>`);
+  $("#lbMode").value=bcOpt.mode;$("#lbSize").value=bcOpt.size;$("#lbPrice").checked=bcOpt.price;
+  $("#lbX").onclick=()=>back?back():closeModal();
+  $("#lbGo").onclick=()=>{
+    bcOpt={mode:$("#lbMode").value,size:$("#lbSize").value,price:$("#lbPrice").checked};
+    const e=rows.map((r,i)=>({p:r.p,n:Math.min(500,Math.max(0,Math.floor(num($(`[data-ln="${i}"]`).value))))})).filter(r=>r.n>0);
+    if(!e.length){toast("حدد عدد الملصقات");return}
+    labelsFile(e,"barcodes-purchase-"+x.no+".html");
+  };
+}
+/* shown right after a purchase invoice is saved */
+function purchaseDone(x){
+  const nBc=labelEntries(x).reduce((a,r)=>a+r.n,0);
+  const show=()=>{
+    openModal(`<h2 style="margin-top:0">تم حفظ فاتورة الشراء رقم ${x.no}</h2>
+     <p class="note" style="margin-top:0">تم تحديث المخزون. اختر ما تريد:</p>
+     <div class="row">${paperSel()}</div>
+     <div class="row" style="margin-top:12px"><button class="pri" id="pdPrint" type="button" ${downloads?"":"disabled"}>طباعة الفاتورة</button>
+      <button id="pdPdf" type="button" ${downloads?"":"disabled"}>حفظ كملف PDF</button>
+      <button id="pdLab" type="button" ${downloads&&nBc?"":"disabled"}>طباعة الباركود (${nBc} ملصق)</button>
+      <button id="pdX" type="button">إغلاق</button></div>
+     <p class="note">تفتح الفاتورة في تبويب جديد مع نافذة الطباعة. لحفظها PDF اختر «حفظ كـ PDF» (Save as PDF) كطابعة في تلك النافذة.</p>`);
+    wirePaper();
+    $("#pdPrint").onclick=()=>printPurchase(x,$("#pvPaper").value);
+    $("#pdPdf").onclick=()=>{toast("اختر «حفظ كـ PDF» من قائمة الطابعات");printPurchase(x,$("#pvPaper").value)};
+    $("#pdLab").onclick=()=>purchaseLabelsDialog(x,show);
+    $("#pdX").onclick=closeModal;
+  };
+  show();
+}
 function showPurchase(x){
   const can2=canDo("voidInv")&&!x.void;
   openModal(`<div class="bar" style="margin:0"><h2>فاتورة شراء ${x.no}${x.void?" · ملغاة":""}</h2><button type="button" id="mX">إغلاق</button></div>
    ${x.void?`<div class="warnbox">ملغاة بواسطة ${esc(x.voidBy||"-")} ${x.voidTs?fmtDate(x.voidTs):""}${x.voidWhy?" — "+esc(x.voidWhy):""}</div>`:""}
    <div class="inv">${purchaseBody(x)}</div>
+   <div class="row" style="margin-top:10px">${paperSel()}</div>
    <div class="row" style="margin-top:10px"><button class="pri" id="pvPrint" type="button" ${downloads?"":"disabled"}>طباعة الفاتورة</button>
+    <button id="pvPdf" type="button" ${downloads?"":"disabled"}>حفظ كملف PDF</button>
     <button id="pvLab" type="button" ${downloads?"":"disabled"}>طباعة باركود الأصناف</button>
     ${can2?`<button id="pvEdit" type="button">تعديل</button><button class="dng" id="pvVoid" type="button">إلغاء الفاتورة</button>`:""}</div>
-   <p class="note">الطباعة تنزّل ملفا جاهزا؛ افتحه فتظهر نافذة الطباعة تلقائيا.</p>`,true);
-  $("#mX").onclick=closeModal;$("#pvPrint").onclick=()=>printPurchase(x);
-  $("#pvLab").onclick=()=>{const e=labelEntries(x);if(!e.length){toast("لا توجد أصناف بباركود");return}labelsFile(e,"barcodes-purchase-"+x.no+".html")};
+   <p class="note">تفتح الفاتورة في تبويب جديد مع نافذة الطباعة. لحفظها PDF اختر «حفظ كـ PDF» كطابعة.</p>`,true);
+  wirePaper();
+  $("#mX").onclick=closeModal;$("#pvPrint").onclick=()=>printPurchase(x,$("#pvPaper").value);
+  $("#pvPdf").onclick=()=>{toast("اختر «حفظ كـ PDF» من قائمة الطابعات");printPurchase(x,$("#pvPaper").value)};
+  $("#pvLab").onclick=()=>purchaseLabelsDialog(x,()=>showPurchase(x));
   if(can2){$("#pvEdit").onclick=()=>voidPurchaseDialog(x,true);$("#pvVoid").onclick=()=>voidPurchaseDialog(x,false)}
 }
 

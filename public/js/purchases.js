@@ -31,9 +31,7 @@ V.purchase=()=>{
     <div class="f1"><div class="tot"><span>إجمالي الفاتورة</span><b>${money(total)} ${CUR}</b></div>
      <div class="tot"><span>المتبقي للمورد</span><b style="color:${total-paid>0?"var(--warn)":"inherit"}">${money(total-paid)} ${CUR}</b></div></div>
     <button class="pri" id="pSave" type="button" ${pur.lines.length?"":"disabled"}>حفظ الفاتورة وإدخال المخزون</button></div>
-    <div class="row" style="margin-top:10px;gap:18px"><label style="flex-direction:row;align-items:center;gap:8px;flex:0 0 auto"><input id="pPrInv" type="checkbox" style="width:auto" ${lsGet("ph-print-inv")?"checked":""}> طباعة الفاتورة فور الحفظ</label>
-     <label style="flex-direction:row;align-items:center;gap:8px;flex:0 0 auto"><input id="pPrBc" type="checkbox" style="width:auto" ${lsGet("ph-print-bc")?"checked":""}> طباعة ملصقات الباركود فور الحفظ</label>
-     <span class="note">${downloads?"يُنزَّل ملف جاهز للطباعة ويُفتح لتظهر نافذة الطباعة.":"الطباعة غير متاحة في هذا العرض."}</span></div>
+    <p class="note" style="margin:10px 0 0">بعد الحفظ تظهر نافذة لطباعة الفاتورة أو حفظها PDF أو طباعة ملصقات الباركود بعدد الكميات المُدخلة.</p>
     <p class="note" style="margin:8px 0 0">اترك «المدفوع» فارغا إذا تم دفع كامل الفاتورة. أي مبلغ متبقي يُسجَّل على حساب المورد.</p></div>`;
   wireDrafts({list:()=>purs,open:purOpen,add:purAdd,del:purDel,size:p=>p.lines.length,again:()=>V.purchase()});
   const keep=()=>{pur.supplier=$("#pSup").value;pur.invNo=$("#pNo").value;pur.date=$("#pDate").value;pur.paid=$("#pPaid").value};
@@ -76,11 +74,9 @@ V.purchase=()=>{
     const no=keepNo||await store.nextNo("purchases",0);
     const doc={no,ts:Date.now(),date:pur.date,supplier:pur.supplier.trim(),partyId:pid||"",invNo:pur.invNo,items:pur.lines.map(l=>({...l})),total,paid,by:me?me.name:""};
     await store.save("purchases",uid(),doc);
-    try{localStorage.setItem("ph-print-inv",$("#pPrInv").checked?"1":"0");localStorage.setItem("ph-print-bc",$("#pPrBc").checked?"1":"0")}catch(e){}
-    const wantInv=$("#pPrInv").checked,wantBc=$("#pPrBc").checked;
     if(rem>0&&pid)await ledgerAdd(pid,"buy",rem,"فاتورة شراء "+(pur.invNo||("رقم "+no)),no);
     purDel(pIdx);toast("تم حفظ الفاتورة وتحديث المخزون");V.purchase();
-    if(downloads){if(wantInv)await printPurchase(doc);if(wantBc){const e=labelEntries(doc);if(e.length)await labelsFile(e,"barcodes-purchase-"+no+".html")}}
+    purchaseDone(doc);
   };
 };
 
